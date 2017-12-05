@@ -1,25 +1,15 @@
 buildscript {
 	ext {
-		springBootVersion = '1.5.4.RELEASE'
+		springBootVersion = '1.5.9.RELEASE'
 	}
 	repositories {
-		maven {
-			credentials {
-				username "AMicroserviceP_deployment"
-				password "x4s6s5t1w7"
-			}
-			url "http://ci-repo-prod01.adesso.local/nexus/content/groups/AMicroserviceP"
-		}
+		mavenCentral()
 	}
 	dependencies {
 		classpath("org.springframework.boot:spring-boot-gradle-plugin:${springBootVersion}")
 		classpath("se.transmode.gradle:gradle-docker:1.2")
+		classpath "io.spring.gradle:dependency-management-plugin:0.5.6.RELEASE"
 	}
-}
-
-plugins {
-	id "jacoco"
-	id "org.sonarqube" version "2.2"
 }
 
 apply plugin: 'application'
@@ -30,74 +20,42 @@ apply plugin: 'org.springframework.boot'
 apply plugin: 'docker'
 apply plugin: "io.spring.dependency-management"
 
-group = "de.adesso.amp.basemodules"
-
 distDocker {
 	exposePort 8765
 	setEnvironment 'JAVA_OPTS', '-Dspring.profiles.active=docker'
 }
 
 docker {
-	maintainer = 'aMP-Team <martin.philippi@adesso.de>'
+	maintainer = 'Yannick Guth <yannick.guth@adesso.de>'
 	baseImage = 'java:8'
 }
 
-sonarqube {
-	properties {
-		property "sonar.projectName", "AMP Zuul"
-		property "sonar.projectKey", "de.adesso.amp:amp-zuul"
-		property "sonar.jacoco.reportPath", "${project.buildDir}/jacoco/test.exec"
-		property "sonar.exclusions", "**/swagger/**"
-	}
-}
 jar {
-	baseName  = 'amp-zuul'
+	baseName  = 'microservice-zuul'
 }
-uploadArchives {
-	repositories {
-		mavenDeployer {
-			repository(
-					url: "http://ci-repo-prod01.adesso.local/nexus/content/repositories/AMicroserviceP_release") {
-				authentication(userName: "AMicroserviceP_deployment", password: "x4s6s5t1w7")
-			}
-			snapshotRepository(
-					url: "http://ci-repo-prod01.adesso.local/nexus/content/repositories/AMicroserviceP_snapshot") {
-				authentication(userName: "AMicroserviceP_deployment", password: "x4s6s5t1w7")
-			}
-		}
-	}
-}
+
 repositories {
-	maven {
-		credentials {
-			username "AMicroserviceP_deployment"
-			password "x4s6s5t1w7"
-		}
-		url "http://ci-repo-prod01.adesso.local/nexus/content/groups/AMicroserviceP"
-	}
+	mavenCentral()
 }
 
 dependencyManagement {
 	imports {
-		mavenBom "org.springframework.cloud:spring-cloud-dependencies:Brixton.SR5"
-		mavenBom 'org.springframework.cloud:spring-cloud-sleuth:1.2.0.RELEASE'
+//		mavenBom "org.springframework.cloud:spring-cloud-dependencies:Brixton.SR5"
+		mavenBom 'org.springframework.cloud:spring-cloud-dependencies:Edgware.RELEASE'
 	}
 }
 
 dependencies {
+	compile('org.springframework.cloud:spring-cloud-starter-hystrix')
 	compile('org.springframework.cloud:spring-cloud-starter-zuul')
-	compile 'org.springframework.cloud:spring-cloud-starter-config'
+	compile('org.springframework.cloud:spring-cloud-starter-ribbon')
+	compile 'org.springframework.cloud:spring-cloud-starter-eureka'
 	compile('org.springframework.boot:spring-boot-starter')
-	compile('org.springframework.cloud:spring-cloud-starter-eureka')
-	compileOnly('org.projectlombok:lombok')
+//	compileOnly('org.projectlombok:lombok')
 	compile('org.springframework.boot:spring-boot-starter-web')
 	compile('org.springframework.boot:spring-boot-starter-actuator')
 
 	testCompile('org.springframework.boot:spring-boot-starter-test')
 	testCompile "junit:junit"
 	testCompile 'com.jayway.jsonpath:json-path-assert:2.2.0'
-}
-
-task wrapper(type: Wrapper) {
-	gradleVersion = '3.1'
 }
