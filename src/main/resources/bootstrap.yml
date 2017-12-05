@@ -1,0 +1,100 @@
+info:
+  component: 'AmpZuul (Adesso Microservices Plattform | Reverse Proxy)'
+
+spring:
+  application:
+    name: edgeserver
+
+management:
+  security:
+    enabled: false
+
+endpoints:
+  restart:
+    enabled: true
+  shutdown:
+    enabled: true
+  health:
+    sensitive: false
+
+server:
+  port: 8765
+
+zuul:
+  addProxyHeaders: true
+  sensitiveHeaders: Cookie, Set-Cookie
+  # limit the routes to only allow calls to services
+  ignoredServices: "*"
+  routes:
+    # route für composite microservice
+    composite:
+      path: /composite/**
+      serviceId: composite
+
+    # route für artist microservice
+    artists:
+      path: /locations/**
+      stripPrefix: false
+      serviceId: locations
+
+    # route für ticket microservice
+    tickets:
+      path: /tickets/**
+      stripPrefix: true
+      serviceId: tickets
+
+    # route für event microservice
+    events:
+      path: /events/**
+      stripPrefix: false
+      serviceId: events
+
+#security:
+#  user:
+#    password: ${zuul.password} # Don't use a default password in a real app
+---
+# For deployment without Docker containers
+spring:
+  profiles: default
+
+#  cloud:
+#    config:
+#      failFast: true
+#      retry:
+#        initialInterval: 3000
+#        multiplier: 1.3
+#        maxInterval: 5000
+#        maxAttempts: 20
+#      uri: http://localhost:8888
+
+eureka:
+  instance:
+    leaseRenewalIntervalInSeconds: 1
+    leaseExpirationDurationInSeconds: 2
+  client:
+    serviceUrl:
+      defaultZone: ${vcap.services.eureka-service.credentials.uri:http://localhost:8761}/eureka/
+
+
+---
+# For deployment in Docker containers
+spring:
+  profiles: docker
+
+#  cloud:
+#    config:
+#      fail-fast: true
+#      retry:
+#        initialInterval: 3000
+#        multiplier: 1.3
+#        maxInterval: 5000
+#        maxAttempts: 20
+#      uri: http://10.1.102.175:8888
+
+eureka:
+  instance:
+    leaseRenewalIntervalInSeconds: 1
+    leaseExpirationDurationInSeconds: 2
+  client:
+    serviceUrl:
+      defaultZone: http://eureka:8761/eureka/
