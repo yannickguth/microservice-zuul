@@ -20,6 +20,10 @@ endpoints:
 server:
   port: 8765
 
+eureka:
+   instance:
+     instance-id: ${spring.application.name}:${random.int}
+
 zuul:
   addProxyHeaders: true
   sensitiveHeaders: Cookie, Set-Cookie
